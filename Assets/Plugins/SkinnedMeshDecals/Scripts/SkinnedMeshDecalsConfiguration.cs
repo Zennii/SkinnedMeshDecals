@@ -5,7 +5,8 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-namespace SkinnedMeshDecals {
+namespace SkinnedMeshDecals
+{
 #if UNITY_EDITOR
 [CustomEditor(typeof(SkinnedMeshDecalsConfiguration))]
 public class SkinnedMeshDecalsConfigurationEditor : Editor {
@@ -15,20 +16,23 @@ public class SkinnedMeshDecalsConfigurationEditor : Editor {
     }
 }
 #endif
-public class SkinnedMeshDecalsConfiguration : MonoBehaviour {
-    [Range(32,1024)]
-    [Tooltip("Memory usage in megabytes before old textures get removed.")]
-    public float memoryBudget = 512;
-    [Range(32,4096)]
-    [Tooltip("This determines how big the textures are for each objects' scale. Calculated by pixels per meter.")]
-    public int texelsPerMeter = 512;
-    void Start() {
-        PaintDecal.memoryBudget = memoryBudget;
-        PaintDecal.texelsPerMeter = texelsPerMeter;
+    public class SkinnedMeshDecalsConfiguration : MonoBehaviour
+    {
+        [Range(32, 1024)]
+        [Tooltip("Memory usage in megabytes before old textures get removed.")]
+        public float memoryBudget = 1024;
+        [Range(32, 4096)]
+        [Tooltip("This determines how big the textures are for each objects' scale. Calculated by pixels per meter.")]
+        public int texelsPerMeter = 2048;
+        void Start()
+        {
+            PaintDecal.memoryBudget = memoryBudget;
+            PaintDecal.texelsPerMeter = texelsPerMeter;
+        }
+        void OnValidate()
+        {
+            Start();
+        }
     }
-    void OnValidate() {
-        Start();
-    }
-}
 
 }
