@@ -62,10 +62,12 @@ namespace SkinnedMeshDecals
                 GameObject.Destroy(oldestInfo);
             }
         }
+
         public static bool IsDecalable(Material m, string textureTarget = defaultTextureName)
         {
             return m.HasProperty(textureTarget);
         }
+
         public static void OnMemoryChanged()
         {
             while (memoryInUsage > memoryBudget)
@@ -73,10 +75,12 @@ namespace SkinnedMeshDecals
                 RemoveOldest();
             }
         }
+
         public static void AddDecalableInfo(MonobehaviourHider.DecalableInfo info)
         {
             rendererCache.Add(info);
         }
+
         public static void RemoveDecalableInfo(MonobehaviourHider.DecalableInfo info)
         {
             rendererCache.Remove(info);
@@ -108,6 +112,34 @@ namespace SkinnedMeshDecals
                 SkinnedMeshDecals.PaintDecal.RenderDecal(renderer, projector, position, rotation, size, depth, textureName);
             }
         }
+
+        public static void RenderDecalForColliderFlat(Collider c, Material projector, string textureName = defaultTextureName)
+        {
+            LODGroup group = c.GetComponentInParent<LODGroup>();
+            if (group != null)
+            {
+                staticRenderers.Clear();
+                group.transform.GetComponentsInChildrenNoAlloc<Renderer>(staticTempRenderers, staticRenderers);
+                foreach (Renderer renderer in staticRenderers)
+                {
+                    SkinnedMeshDecals.PaintDecal.RenderDecalFlat(renderer, projector, textureName);
+                }
+                return;
+            }
+            Renderer parentRenderer = c.GetComponentInParent<Renderer>();
+            if (parentRenderer != null)
+            {
+                SkinnedMeshDecals.PaintDecal.RenderDecalFlat(parentRenderer, projector, textureName);
+            }
+
+            staticRenderers.Clear();
+            c.transform.GetComponentsInChildrenNoAlloc<Renderer>(staticTempRenderers, staticRenderers);
+            foreach (Renderer renderer in staticRenderers)
+            {
+                SkinnedMeshDecals.PaintDecal.RenderDecalFlat(renderer, projector, textureName);
+            }
+        }
+
         public static void RenderDecalInSphere(Vector3 position, float radius, Material projector, Quaternion rotation, LayerMask hitMask, string textureName = defaultTextureName)
         {
             int hits = Physics.OverlapSphereNonAlloc(position, radius, colliders, hitMask, QueryTriggerInteraction.UseGlobal);
@@ -117,6 +149,7 @@ namespace SkinnedMeshDecals
                 SkinnedMeshDecals.PaintDecal.RenderDecalForCollider(c, projector, position - rotation * Vector3.forward * radius, rotation, Vector2.one * radius, radius * 2f, textureName);
             }
         }
+
         public static void RenderDecalInBox(Vector3 boxHalfExtents, Vector3 position, float radius, Material projector, Quaternion boxOrientation, LayerMask hitMask, string textureName = defaultTextureName)
         {
             int hits = Physics.OverlapBoxNonAlloc(position, boxHalfExtents, colliders, boxOrientation, hitMask, QueryTriggerInteraction.UseGlobal);
@@ -126,10 +159,12 @@ namespace SkinnedMeshDecals
                 SkinnedMeshDecals.PaintDecal.RenderDecalForCollider(c, projector, position - boxOrientation * Vector3.forward * boxHalfExtents.z, boxOrientation, new Vector2(boxHalfExtents.x, boxHalfExtents.y) * 2f, boxHalfExtents.z * 2f, textureName);
             }
         }
+
         public static void RenderDecalForCollision(Collider c, Material projector, Vector3 position, Vector3 normal, float rotationAboutNormal, Vector2 size, float halfDepth = 0.5f, string textureName = defaultTextureName)
         {
             SkinnedMeshDecals.PaintDecal.RenderDecalForCollider(c, projector, position + normal * halfDepth, Quaternion.AngleAxis(rotationAboutNormal, normal) * Quaternion.FromToRotation(Vector3.forward, -normal), size, halfDepth * 2f, textureName);
         }
+
         public static void RenderDecal(Renderer r, Material projector, Vector3 position, Quaternion rotation, Vector2 size, float depth = 0.5f, string textureName = defaultTextureName)
         {
             // Only can draw on meshes.
@@ -153,6 +188,24 @@ namespace SkinnedMeshDecals
             Graphics.ExecuteCommandBuffer(commandBuffer);
         }
 
+        public static void RenderDecalFlat(Renderer r, Material projector, string textureName = defaultTextureName)
+        {
+            // Only can draw on meshes.
+            if (!(r is SkinnedMeshRenderer) && !(r is MeshRenderer))
+            {
+                return;
+            }
+            MonobehaviourHider.DecalableInfo info = r.GetComponent<MonobehaviourHider.DecalableInfo>();
+            if (info == null)
+            {
+                info = r.gameObject.AddComponent<MonobehaviourHider.DecalableInfo>();
+            }
+
+            commandBuffer.Clear();
+            info.Render(commandBuffer, projector, textureName);
+            Graphics.ExecuteCommandBuffer(commandBuffer);
+        }
+
         public static void ClearCollider(Collider c, string textureName = defaultTextureName)
         {
             Renderer parentRenderer = c.GetComponentInParent<Renderer>();
@@ -164,7 +217,6 @@ namespace SkinnedMeshDecals
 
         public static void Clear(Renderer r, string textureName = defaultTextureName)
         {
-
             // Only can draw on meshes.
             if (!(r is SkinnedMeshRenderer) && !(r is MeshRenderer))
             {
